@@ -1,16 +1,23 @@
 # Azure AD authentication in Microsoft Teams
 
-Microsoft Teams is a communication platform that serves thousands of users world-wide with the aim to simplify collaboration and management of internal and external processes. Most organizations use Teams because of the chat features it provide, but that is just a minor part of what it truly offers.
+Microsoft Teams is a communication platform that serves thousands of users world-wide with the aim to simplify collaboration and management of internal and external processes. Most organizations use Teams because of the chat features it provide, but that is just a small part of what it truly offers.
 
 Did you know that you can build a web application, integrate it with Microsoft Teams, and then share it within your organization to automate time-consuming tasks? Additionally, you integrate it with Microsoft Graph, a Restful web API to interact with Microsofts cloud services such as Excel, SharePoint, OneDrive and so on.
 
 Organizations today have many challenges that can be improved and automated.
-For instance one could generate timesheets to Excel from a third-party API to simplify work for the financial team, automate employemeent process for those working with Human Resource, send out weekly news and reports to to all employees and so on are few among many good reasons to use Microsoft Graph.
+For instance one could generate timesheets to Excel from a third-party API to simplify work for the financial team, automate employemeent processes for HR team, sending out weekly news, reports and reminders to employees and so forth. These are few among many good reasons to use Microsoft Graph API endpoint.
+
+![Microsoft Graph](https://docs.microsoft.com/en-us/graph/images/microsoft-graph-dataconnect-connectors-800.png)
+
+As described in by Microsoft - Microsoft Graph is the gateway to data and intellegence in Microsoft 365 (Outloook, SharePoint, OneDrive, Office). A single endpoint `https://graph.microsoft.com` to access data for building and automating apps for organizations and consumers that interact with millions of users. If you are interested and want to try some of the MS Graph endpoints, check out [Microsoft Grap Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer/preview) (UI based platform for MS Graph endpoints).
 
 ## Goal
-In this article, we'll create a simple web application that generates an Excel file on users OneDrive account. For this to happen, we first need to authenticate the user in Azure Active Directory (AAD), and then use the response (token) it returns to access Microsoft Graph API in order to generate an Excel file.
+In this article, we'll create a simple web application that generates an Excel file on users OneDrive account. For this to happen we must:
+1. Authenticate user in Azure Active Directory (AAD)
+2. Get `access_token` from authorization endpoint
+3. Then use `access_token` to further access Microsoft Graph endpoint
 
-> What is Azure Actice Directory (AAD), and why do we need it? You can see AAD as a gateway to access Microsoft cloude services. We use it to verify users or application has access rights to modify our Microsoft services.
+> What is Azure Actice Directory (AAD), and why do we need it? In order to secure our data from a unauthorized users, we must ensure two things; they belong to the correct domain (company), and consent to provided access permisions like (User.Read, File.Read).
 
 This article won't cover how to integrate a web application with Microsoft Teams using App Studio. Here's a nice article written by Pär that covers it very well.
 
