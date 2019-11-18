@@ -1,17 +1,17 @@
 # Azure AD authentication in Microsoft Teams
-
-Microsoft Teams is a communication platform that serves thousands of users world-wide with the aim to simplify collaboration and management of internal and external processes. Most organizations use Microsoft Teams because of the chat features it provide, but that's just a small part of what it truly offers.
-
-Organizations today use many services as Microsoft provide, but know very little of what flexibility and
-
-![Netcompany logo](https://miro.medium.com/max/137/1*CWxqiYnxrOzHP-t8wQWfjQ.png)
-
-_I work as a Software Consultant at Netcompany Norway - an international company with more than 2000 employees in 6 countries that provides valuable expertise and experience to help organizations with digital transformation. Currently, they are exploring new fields and ways to automate time-consuming processes using Microsoft cloude services. One of them is to integrate a web app with Microsoft Teams to reduce time-consuming tasks._
-
+Microsoft Teams is a collaboration app with [13 millions](https://www.microsoft.com/en-us/microsoft-365/blog/2019/07/11/microsoft-teams-reaches-13-million-daily-active-users-introduces-4-new-ways-for-teams-to-work-better-together/) daily active users. A hub for teamwork that combines chat, video meetings, calling, and files into a complete integrated app. Teams is mainly known and used for the communication features it offers, however, a good service that many are not familiar with is the custom tabs functionality. This opens a whole new world of possibilties. Users can create custom web apps, integrate it with Teams, and interact with Microsofot 365 platform (Office, OneDrive, SharePoint, and Outlook).
 
 ![Microsoft Graph](https://docs.microsoft.com/en-us/graph/images/microsoft-graph-dataconnect-connectors-800.png)
 
 As described by Microsoft - Microsoft Graph is the gateway to data and intellegence in Microsoft 365 (Outloook, SharePoint, Office). A single endpoint `https://graph.microsoft.com` to access data to builde and automate apps for organizations and consumers that interact with millions of users. If you are interested and want to try some of the MS Graph endpoints, check out [Microsoft Grap Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer/preview) (UI based platform for MS Graph endpoints).
+
+
+
+
+![Netcompany logo](https://miro.medium.com/max/137/1*CWxqiYnxrOzHP-t8wQWfjQ.png)
+
+_I work as a Software Consultant at Netcompany Norway - an international company with more than 2000 employees in 6 countries that provides valuable expertise and experience to help organizations with digital transformation. Currently, they are exploring new fields and ways to automate time-consuming processes using Microsoft cloude services. One of them is to integrate a web app with Microsoft Teams to generate excel files for the accountant team to reduce labor work._
+
 
 ## Outcome
 
