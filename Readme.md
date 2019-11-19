@@ -34,6 +34,8 @@ This article won't cover how to integrate a web application with Microsoft Teams
 
 > Did you know that App Registration in Azure AD offers developers a simple, secure, and flexible way to sign-in and acess Azure resources like Graph API. Additionally, one can grant spesified permissions on each user to preserve a secure system from malicious attacks.
 
+## Authenticate a user
+
 ## Installation
 
 1. Microsoft Teams SDK
@@ -56,7 +58,7 @@ Let us begin with installing these two packages, open your terminal and run:
 npm install --save adal-angular
 npm install --save @microsoft/teams-js
 ```
-> Note: Currently there is one NPM package providing both the plain JS library (adal.js) and the AngularJS wrapper (adal-angular.js). In short, `adal-angular` works fine with plain JavaScript or TypeScript even though the naming consit Angular.
+> Note: Currently there is one NPM package providing both the plain JS library (adal.js) and the AngularJS wrapper (adal-angular.js). In short, `adal-angular` works fine with plain JavaScript or TypeScript even though the package name has Angular.
 
 If you are using TypeScript, there is a `@types` package for `adal-angular`. Having types on a package you haven't worked on before is extremely handy, especially when you want to see the abilities/limitations a package offers without needing to open the documentation for every object or method.
 
@@ -74,7 +76,7 @@ import AuthenticationContext, { Options } from 'adal-angular';
 import * as microsoftTeams from '@microsoft/teams-js';
 ```
 
-## Initialize Microsoft Teams
+### Initialize Microsoft Teams
 
 Since MS Teams is showing the content page using `iframe` (a nested browsing context) we need to make sure the user is a part of the MS Teams context before running authentication. It means authentication process runs only if the content page is opened within MS Teams. This does neccessarly mean the app is fully secure but ensures that authentication flow only runs for MS Teams users.
 
@@ -86,7 +88,7 @@ microsoftTeams.initialize();
 
 This way the content page is displayed in MS Teams through the embedded view context.
 
-## Setup Configuration
+### Setup Configuration
 
 Before we setup the configuration object with details (found in overview page in Azure AD) to authenticate the user, we must add the `redirectURI` in the list of redirect URIs for the Azure AD app. Once the user is successfully authenticated, Azure AD validates if `redirectURI` exists, and if the `redirectURI` is not found in Azure AD, the process will fail by returning an error: `The reply url specified in the request does not mach the reply urls configured for the application`.
 
@@ -119,7 +121,7 @@ let config: Options = {
 };
 ```
 
-## 4. Create a configuration context
+### Create a authentication context
 
 In order to access methods like `login`, `logout`, `getCachedUser`, `getCachedToken`, `aquireToken` and so on, we need to create an `AutenticationContext` and pass `config` object as argument. This establishes like a communication bridge between the web app and Azure AD for authenticating users.
 
@@ -129,7 +131,7 @@ let authContext = new AuthenticationContext(config);
 
 Now everytime you use `authContext`, it will perform operations based on what is defined in `config` object. This means if your application interacts with various of Azure AD domains, you can setup multiple contexts.
 
-## Check if user is logged in
+### Check if user is logged in
 
 Once we have created an `AuthenticationContext(config)`, the next step is check if user is cached. Keep in mind that the whole authentication process is done through `MicrosoftTeams.getContext({...auth process goes here...})` to ensure the auth process only runs within MS Teams.
 
@@ -138,8 +140,8 @@ Once we have created an `AuthenticationContext(config)`, the next step is check 
 microsoftTeams.getContext((context) => {
     let user = authContext.getCachedUser();
     if (user) {
-        // Code that runs here means the user has been authenticated
-        // Get access_token for MS Graph
+        // Use is now authenticated
+        // Get access_token to access MS Graph API (This part is found in **get access token** section below)
     } else {
         // Show login popup
         authContext.login();
@@ -149,19 +151,50 @@ microsoftTeams.getContext((context) => {
 
 As shown above, before we can authenticate the user, we check if the user is cached (already stored in memory). If user is not cached, we invoke the `authContext.login()` method which opens up a popup page that waits for user credentials. Remember to set the popup property to `true` in configs otherwise the popup page won't show. If user has already signed in in MS Teams, the popup page uses that context to automatically sign in the user. It means the popup page will only be visible within 1-2 seconds.
 
-## Handle cache
+### Handle cache
 
-Once the user has logged in, we cache it to reduce number of authenticate requests to server. Working with cache is always a challenge in terms of refreshing it when it is necessary. Adal.js provides an easy and convinient way to handle cache using with methods like `authContext.getCachedUser()`, `authContext.getCachedToken()`, and 'authContext.clearCache()'.
+Once the user has logged in, to reduce number of authenticate requests to server we need to cache it. Working with cache in gneneral is always a challenge in terms of deciding when to change the old value with the new value. However, `Adal.js` provides an easy and convinient way to handle cache with methods like `authContext.getCachedUser()`, `authContext.getCachedToken()`, and 'authContext.clearCache()'.
 
-If the current user is not the same as the one in Teams context, we clear the cache. Doing so, the new user has to login again. The code shown in step 5 will be triggered.
+So the way we handle cache is by simply checking if the expected user (from MS Teams context) is the same as the cached user (from Azure AD):
 
 ```ts
-// Clear cache if expected user is different
-if (user.userName !== context.upn) {
-    authContext.clearCache();
-}
-````
+// Clear cache if expected user is not the same as cached user
+microsoftTeams.getContext((context) => {
 
+    let user = authContext.getCachedUser();
+    if (user.userName !== context.upn) { // upn stands for user principal name, same as username (based on the Internet standard RFC 822)
+        authContext.clearCache();
+    }
+
+}
+```
+
+ If expected user is not the same as cached user, we clear the cache. This means the next time user enters the content page, he needs to login again.
+
+## Get access token
+
+Once the user is authenticated, the next step is to authorize the user. At first, these two words seems synonoms, but must not be mixed. Authentication means confirming the user's identity wheres authorization means being allowed to access to the system. In otherwords, to allow a the content page to interact with MS Graph API, for instance generate an excel file or get user details, we must ask (authorize) the user if that is okey. This is done by showing the user a popup page with a list of permissions where user can consent or cancel.
+
+> According to the documentation and examples using Adal.js library, it seems that it is possible to get access token using the example shown above. That would be the easiest and most practical way of doing so by utilizing the library, however, I tried different approaches but could not get the access token and instead got id token. You need access token in order to access Microsoft Graph endpoints. After many trials, I went with an approach which works, but I'm sure there are better ways of doing it.
+
+
+```ts
+ let queryParams = {
+    client_id: context.tid,
+    response_type: "token",
+    response_mode: "fragment",
+    scope: "https://graph.microsoft.com/User.Read openid",
+    redirect_uri: window.location.origin + '/tab-auth/autherization-end',
+    prompt: 'login',
+    nonce: 1234,
+    state: 5687,
+    login_hint: context.loginHint,
+};
+
+let authorizeEndpoint = `https://login.microsoftonline.com/${config.tenant}/oauth2/v2.0/authorize?${toQueryString(queryParams)}`;
+window.location.assign(authorizeEndpoint);
+
+```
 
 
 
