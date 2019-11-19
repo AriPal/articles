@@ -173,28 +173,145 @@ microsoftTeams.getContext((context) => {
 
 ## Get access token
 
-Once the user is authenticated, the next step is to authorize the user. At first, these two words seems synonoms, but must not be mixed. Authentication means confirming the user's identity wheres authorization means being allowed to access to the system. In otherwords, to allow a the content page to interact with MS Graph API, for instance generate an excel file or get user details, we must ask (authorize) the user if that is okey. This is done by showing the user a popup page with a list of permissions where user can consent or cancel.
+Once the user is authenticated, the next step is to authorize the user. At first, these two words seems synonoms, but must not be mixed. Authentication means confirming the user's identity wheres authorization means being allowed to access the domain. In otherwords, to allow a the content page to interact with MS Graph API, for instance generate an excel file or get user details, the user must authorize it. This is done by showing a popup page with a list of permissions the user can consent or cancel.
 
-> According to the documentation and examples using Adal.js library, it seems that it is possible to get access token using the example shown above. That would be the easiest and most practical way of doing so by utilizing the library, however, I tried different approaches but could not get the access token and instead got id token. You need access token in order to access Microsoft Graph endpoints. After many trials, I went with an approach which works, but I'm sure there are better ways of doing it.
 
+### Application or Delegate
+
+There are two permission types (Application or Delegate) to get an access token. Application if a dameon service wants to sends emails on a weekly-basis (user authentication is not required), Delegate if actions comes from a user (user authentication is required). Admin can set permissions differently for Applicaiton or Delegate depending on domain requirements in Azure AD.
+
+
+```bash
+# User based
+https://login.microsoftonline.com/${context.tid}/oauth2/v2.0/authorize?{queryParams}
+
+# Application based
+https://login.microsoftonline.com/${context.tid}/oauth2/v2.0/token?{queryParams}
+```
+
+As mentioned, to open the gateway to interact with MS Graph API we need an `access_token`. To get the access token, we must navigate to `authorizeEndpoint` with the query parameters defined in `queryParams` object. The authorization endpoint also needs a tenant id which can be found in MS graph context or the config object defind above.
+
+> According to the documentation and examples using Adal.js library, it seems that it is possible to get access token using the example shown above. That would be the easiest and most practical way of doing so by utilizing the library, however, I tried different approaches but could not get the access token and instead got id token. In order to access MS Graph API , an access token is required. After a couple of trials, I went with an approach which works, but I'm sure there are better ways of doing it. The best ways is of course to the the access token when running `aquireToken` method.
 
 ```ts
  let queryParams = {
-    client_id: context.tid,
+    client_id: config.clientId,
     response_type: "token",
     response_mode: "fragment",
     scope: "https://graph.microsoft.com/User.Read openid",
-    redirect_uri: window.location.origin + '/tab-auth/autherization-end',
+    redirect_uri: window.location.origin + '/auth/autherization',
     prompt: 'login',
     nonce: 1234,
     state: 5687,
     login_hint: context.loginHint,
 };
 
-let authorizeEndpoint = `https://login.microsoftonline.com/${config.tenant}/oauth2/v2.0/authorize?${toQueryString(queryParams)}`;
+let authorizeEndpoint = `https://login.microsoftonline.com/${context.tid}/oauth2/v2.0/authorize?${toQueryString(queryParams)}`;
 window.location.assign(authorizeEndpoint);
+```
+
+Once we navigate to the authorizaiton endpoint, Azure AD will check if the query parameters are correct, and most importantly if the user is authenticated. If those criteria are true, it will return an `access_token` as a query string on the url path. Since we are working with a single page application like React, we need a way to capture this  `access_token`. The simplest way is to create a component that runs once the `authorizationEndpoint` is triggered.
+
+#### Setup routing for the authorization endpoint
+
+To setup routing for the authorization endpoint, we use the `react-router-dom` library. Then we define an exact path `/auth/autherization` which redirects to the `Authorization` component.
+
+```ts
+import React from 'react';
+import Home from './Home';
+import { BrowserRouter as Router, Route } from 'react-router-dom';
+import Authorization from './Authorization';
+
+const Navigation = () => {
+    return (
+        <Router>
+            <div>
+                <Route path="/" exact component={Home}></Route>
+                <Route path="/auth/autherization" exact component={Authorization}></Route>
+            </div>
+        </Router>
+    );
+}
+
+export default Navigation;
+```
+#### Capture access token and redirect back to homepage
+
+Once the redirect path is triggered, we do two things: cache the `access_token`, and then redirect back to the home page.
+
+```ts
+import React from 'react';
+import { useHistory } from 'react-router-dom'
+import qs from 'querystring';
+
+const Authorization = (props: any) => {
+    let history = useHistory();
+    let querystring = qs.parse(props.location.hash)
+    window.localStorage.setItem('access_token', querystring['#access_token'].toString())
+    history.push('/'); // redirect back to home page
+    return (
+        <div>
+            <h1>This component is only used to cache the access token, and then redirect back to home page</h1>
+        </div>
+    );
+}
+
+export default Authorization;
 
 ```
+
+> Note: If the authorization process fails, you can show an error message here. But make sure you put the redirect code inside a conditional statement.
+
+## Acess Microsoft Graph
+
+With succefull user authentication and an access token, this leads us to the final step where we can use MS Graph API to access data in Azure AD, Office 365 services, Office 365, Enterprise Mobility, Security services, Windows 10 services, and more. For this example, we'll generate an excel file, and store it on user's OneDrive.
+
+The library we use to create an excel file is Sheetjs, install it by following these steps [here](https://www.npmjs.com/package/xlsx).
+
+```ts
+function generateExcelFile() {
+    microsoftTeams.getContext((context) => {
+        authContext.acquireToken(config.clientId, function (errorDesc, token, error) {
+            if (error) {
+                //  Show a sign in button
+                // Renew token if it fails
+            }
+            else {
+                // Get cached access_token
+                let access_token = window.localStorage.getItem('access_token');
+
+                if (access_token) {
+                    const headers = new Headers();
+                    headers.append('Authorization', `Bearer ${access_token}`);
+                    headers.append('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+                    var graphEndpoint = "https://graph.microsoft.com/v1.0/drive/root:/mellomprosjekt/file1.xlsx:/content";
+
+                    // Create excel file
+                    const book = XLSX.utils.book_new();
+                    const sheet = XLSX.utils.aoa_to_sheet(['data1', 'data2']);
+                    XLSX.utils.book_append_sheet(book, sheet, 'sheet1');
+                    let workBook = XLSX.write(book, { bookType: 'xlsx', type: 'array' }); // type must be array otherwise it will be corrupt in OneDrive
+
+                    console.log('workBook', workBook);
+                    let init: RequestInit = {
+                        method: 'PUT',
+                        headers: headers,
+                        body: workBook,
+                    };
+
+                    fetch(graphEndpoint, init)
+                        .then(resp => resp.json())
+                        .then(data => console.log(data))
+                }
+            }
+        });
+    })
+}
+```
+
+
+
 
 
 
