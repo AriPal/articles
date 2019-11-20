@@ -15,7 +15,7 @@ Organizations today can create content pages (web apps), integrate it with MS Te
 > If you are interested and want to try some endpoints MS Graph offers, check out [Microsoft Grap Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer/preview).
 
 ### Outcome
-The end-goal of this article is to generate an Excel file and store it on user's OneDrive, for this to happen we must follow these steps:
+The outcome of this article is to generate an Excel file and store it on user's OneDrive, for this to happen we must follow these steps:
 
 **Step 1** - Authenticate user
 **Step 2** - Ged access token
@@ -42,7 +42,7 @@ The main outcome of this article is to generate an Excel file on user's OneDrive
 
 > Did you know that App Registration in Azure AD offers developers a simple, secure, and flexible way to sign-in and acess Azure resources like Graph API. Additionally, one can grant spesified permissions on each user to preserve a secure system from malicious attacks.
 
-## Authenticate user
+## # Authenticate user
 This part covers how to authenticate a user, what packages we need to install, the setup process, and how to aquire an id token. Id token is a part of [OpenID Connect](https://docs.microsoft.com/en-us/azure/active-directory/develop/v1-protocols-openid-connect-code) flow which the client can use to authenticate the user.
 
 > Note: ID Tokens should be used to validate that a user is who they claim to be and get additional useful information about them - it shouldn't be used for authorization in place of an access token.
@@ -194,7 +194,7 @@ return (
     </div>
 );
 ```
-When the user clicks on the button to Generate an Excel file, the function `generateExcelFile()` is invoked. This function runs a method `authContext.aquireToken(resource: string, callback: TokenCallback)` to check if the id token exists or not by returning 3 arguments `errorDesc`, `token`, and `error`:
+When the user clicks on the button to Generate an Excel file, the function `generateExcelFile()` is invoked. This function runs a method `authContext.aquireToken(resource: string, callback: TokenCallback)` which returns 3 arguments in the callback function (`errorDesc`, `token`, and `error`):
 
 ```ts
 function generateExcelFile() {
@@ -215,7 +215,7 @@ function generateExcelFile() {
 As shown above,  we check if an `error` is returned which can be a message of type `token renewal has failed` or `token does not exist`. If error is present, we can show a sign-in button where the user can try to login again. If error is not present, we can go ahead and get the access token, create en Excel file, and then store it on user's OneDrive using MS Graph API.
 
 
-## Get access token
+## # Get access token
 
 Once the user is authenticated, the next step is to authorize the user. At first, these two words seems synonoms, but must not be mixed. Authentication means confirming the user's identity wheres authorization means being allowed to access the domain. In otherwords, to allow a the content page to interact with MS Graph API, for instance generate an excel file or get user details, the user must authorize it. This is done by showing a popup page with a list of permissions the user can consent or cancel.
 
@@ -289,8 +289,9 @@ import qs from 'querystring';
 
 const Authorization = (props: any) => {
     let history = useHistory();
-    let querystring = qs.parse(props.location.hash)
-    window.localStorage.setItem('access_token', querystring['#access_token'].toString())
+    let querystring = qs.parse(props.location.hash);
+    let access_token = querystring['#access_token'].toString();
+    window.localStorage.setItem('access_token', access_token);
     history.push('/'); // redirect back to home page
     return (
         <div>
@@ -305,7 +306,7 @@ export default Authorization;
 
 > Note: If the authorization process fails, you can show an error message here. But make sure you put the redirect code inside a conditional statement.
 
-## Acess MS Graph API
+## # Acess MS Graph API
 
 With succefull user authentication and an access token, this leads us to the final step where we can use MS Graph API to access data in Azure AD, Office 365 services, Office 365, Enterprise Mobility, Security services, Windows 10 services, and more. For this example, we'll generate an excel file, and store it on user's OneDrive.
 
@@ -317,13 +318,13 @@ function generateExcelFile() {
         authContext.acquireToken(config.clientId, function (errorDesc, token, error) {
             if (error) {
                 //  Show a sign in button
-                // Renew token if it fails
             }
             else {
                 // Get cached access_token
                 let access_token = window.localStorage.getItem('access_token');
 
                 if (access_token) {
+                    // Basic fetch api request
                     const headers = new Headers();
                     headers.append('Authorization', `Bearer ${access_token}`);
                     headers.append('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -343,6 +344,7 @@ function generateExcelFile() {
                         body: workBook,
                     };
 
+                    // Run request
                     fetch(graphEndpoint, init)
                         .then(resp => resp.json())
                         .then(data => console.log(data))
