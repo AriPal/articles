@@ -1,49 +1,60 @@
-# Azure AD authentication in Microsoft Teams
+# Learn how authentication and authorization flow works for content page in Microsoft Teams
 
 ![Netcompany logo](https://miro.medium.com/max/137/1*CWxqiYnxrOzHP-t8wQWfjQ.png)
 
-_I work as a Software Consultant at Netcompany Norway - an international company with more than 2000 employees in 6 countries that provides valuable expertise and experience to help organizations with digital transformation. Currently, they are exploring new fields and ways to automate time-consuming processes using Microsoft cloude services. One of them is to integrate web apps with Microsoft Teams to provide better overview and control of project challenges._
+I work as a Software Consultant at Netcompany Norway - an international company with more than 2000 employees in 6 countries that provides valuable expertise and experience to help organizations with digital transformation. Currently, they are exploring new fields and ways to automate time-consuming processes using Microsoft cloude services in Microsoft Teams (MS Teams). One of them, which this article emphasizes on, is to integrate a content page (web app) in MS Teams that can intereact with Microsoft Graph API (MS Graph) for generating an Excel file on user's OneDrive.
 
-Microsoft Teams is a collaboration app with [13 millions](https://www.microsoft.com/en-us/microsoft-365/blog/2019/07/11/microsoft-teams-reaches-13-million-daily-active-users-introduces-4-new-ways-for-teams-to-work-better-together/) active users daily. A hub for teamwork that combines chat, video meetings, calling, and files into a complete integrated app. What makes Microsoft Teams stand out is the flexibility it provides with web apps.
 
-Organizations today can create custom web apps, integrate it with Teams, and, communicate with Microsoft Graph, a Restful API endpoint to interact with Office, OneDrive, SharePoint, Outlook and so on. For instance, a project manager needs to move worked hours for 100 employees from system A to B, imagine the work load; he must create an excel file, add title, add records, and store each file on OneDrive once finished. The time it takes depends, but in general it can take days to complete such work. This is where Microsoft Graph API can become a valuable tool for automating such process. It supports various endpoints for Excel, and many other Microsoft cloud services.
+### The flexibility of Microsoft Teams and MS Graph API
+
+Microsoft Teams is a collaboration app with [13 millions](https://www.microsoft.com/en-us/microsoft-365/blog/2019/07/11/microsoft-teams-reaches-13-million-daily-active-users-introduces-4-new-ways-for-teams-to-work-better-together/) active users daily. A hub for teamwork that combines chat, video meetings, calling, and files into a complete integrated app. What makes MS Teams so unique is the flexibility it provides with integrated wep apps.
+
+Organizations today can create content pages (web apps), integrate it with MS Teams, and, communicate with MS Graph API, a Restful API endpoint to interact with Office, OneDrive, SharePoint, Outlook and so on. For instance, a project manager needs to move worked hours for 100 employees from system A to B, one can imagine the amount of time and resources such work takes. The manager must create an excel file, add title and records, and store each file on OneDrive once finished for every employee. This can take several hours perhaps days to complete. With MS Graph API combined with MS Teams we can automate such process to take seconds. It supports various endpoints for Excel, and many other Microsoft cloud services.
 
 
 > If you are interested and want to try some endpoints MS Graph offers, check out [Microsoft Grap Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer/preview).
 
-## Outcome
-
-In this article, we'll use Silent Authentication, a authentication flow for tabs that uses OAuth 2.0. It's recommended to have some basic understanding of OAuth 2.0, [here's a good overview](https://aaronparecki.com/oauth-2-simplified/#single-page-apps). It reduces number of a user needs to enter their login credentials by silently refreshing the authentication token, thus a popup form is hidden when user has signed in. It means a better user experience when using content pages in Teams.
-
-The end-goal of this article is to generate an Excel file and store it on OneDrive, for this to happen we must follow these steps:
+### Outcome
+The end-goal of this article is to generate an Excel file and store it on user's OneDrive, for this to happen we must follow these steps:
 
 **Step 1** - Authenticate user
 **Step 2** - Ged access token
-**Step 3** - Access Microsoft Graph
+**Step 3** - Access MS Graph API
 
 > What is Azure Actice Directory (AAD), and why do we need it? In order to secure our data from a unauthorized users, we must ensure two things; they belong to the correct domain (company), and consent to provided access permisions like (User.Read, File.Read).
 
 This article won't cover how to integrate a web application with Microsoft Teams using App Studio. Here's a nice [article](https://medium.com/@paumadregis/custom-microsoft-teams-applications-the-easy-way-6da0a5975336) by Pär Joona that covers it very well.
 
+### Silent Authentication with OAuth 2.0
+
+In this article, we'll use Silent Authentication, a authentication flow for tabs that uses OAuth 2.0. It's recommended to have some basic understanding of OAuth 2.0, [here's a good overview](https://aaronparecki.com/oauth-2-simplified/#single-page-apps). In general, it reduces number of times a user needs to enter their login credentials by silently refreshing the authentication token (hides the login popup page if user has already signed in). This creates a pleasent user experience.
+
+
 ## Prerequisites
 
 * Microsoft Teams account
 * Office 365 Developer subscription (Required in order to create apps in MS Teams)
-* [Register app in App registriations](https://docs.microsoft.com/en-us/graph/auth-register-app-v2) to integrate it with Microsoft identity platform and call Microsoft Graph
+* Register app in [App registriation](https://docs.microsoft.com/en-us/graph/auth-register-app-v2) to integrate it with Microsoft identity platform and call MS Graph API
 * A deployed web application (We've used Netlify)
+
+The main outcome of this article is to generate an Excel file on user's OneDrive. For this to happen
+
 
 > Did you know that App Registration in Azure AD offers developers a simple, secure, and flexible way to sign-in and acess Azure resources like Graph API. Additionally, one can grant spesified permissions on each user to preserve a secure system from malicious attacks.
 
-## Authenticate a user
+## Authenticate user
+This part covers how to authenticate a user, what packages we need to install, the setup process, and how to aquire an id token. Id token is a part of [OpenID Connect](https://docs.microsoft.com/en-us/azure/active-directory/develop/v1-protocols-openid-connect-code) flow which the client can use to authenticate the user.
 
-## Installation
+> Note: ID Tokens should be used to validate that a user is who they claim to be and get additional useful information about them - it shouldn't be used for authorization in place of an access token.
+
+### 1. Installation
 
 1. Microsoft Teams SDK
 2. ADAL.js SDK
 
 
 
-## Install NPM packages
+### 2. Install NPM packages
 
 In order to display the content page and communicate with Teams context such as retreive user details, install Microsoft Teams JavaScript client SDK. Additionally, you also need to install Azure Active Directory Library SDK to perform authentication operations.
 
@@ -68,7 +79,7 @@ npm install --save @types/adal-angular
 ```
 
 
-## Import packages
+### 3. Import packages
 Once you've installed the NPM packages, the next step is to import these packages in your JS/TS file. The modules we need to import is `AuthenticationContext` for handling authentication calls to Azure AD, and MS Teams to ingerate and display the content page (web app) within the Teams app. Last but not least, if you are using TypeScript, you can go ahead and add the `Option` interface which shows what properties can be added to an object (the example for this will be shown later).
 
 ```ts
@@ -76,7 +87,7 @@ import AuthenticationContext, { Options } from 'adal-angular';
 import * as microsoftTeams from '@microsoft/teams-js';
 ```
 
-### Initialize Microsoft Teams
+### 4. Initialize Microsoft Teams
 
 Since MS Teams is showing the content page using `iframe` (a nested browsing context) we need to make sure the user is a part of the MS Teams context before running authentication. It means authentication process runs only if the content page is opened within MS Teams. This does neccessarly mean the app is fully secure but ensures that authentication flow only runs for MS Teams users.
 
@@ -88,7 +99,7 @@ microsoftTeams.initialize();
 
 This way the content page is displayed in MS Teams through the embedded view context.
 
-### Setup Configuration
+### 5. Setup Configuration
 
 The seup configuration is pretty much straightforward. But before we setup the configuration with information present in Azure AD to authenticate a user, we must add the `redirectURI` in the list of redirect URIs for the Azure AD app. Once the user is authentication is successfull, Azure AD will check if the `redirectURI` is defined in Azure AD, if it's defined it will add an access token and return it as a query string in which the developer can further use to access MS Graph API. If Azure AD doesn't find the `redirectURI`, it returns a popup page saying: `The reply url specified in the request does not mach the reply urls configured for the application`.
 
@@ -121,7 +132,7 @@ let config: Options = {
 };
 ```
 
-### Create a authentication context
+### 6. Create a authentication context
 
 In order to access methods like `login`, `logout`, `getCachedUser`, `getCachedToken`, `aquireToken` and so on, we need to create an `AutenticationContext` and pass `config` object as argument. This establishes like a communication bridge between the web app and Azure AD for authenticating users.
 
@@ -131,7 +142,7 @@ let authContext = new AuthenticationContext(config);
 
 Now everytime you use `authContext`, it will perform operations based on what is defined in `config` object. This means if your application interacts with various of Azure AD domains, you can setup multiple contexts.
 
-### Login user
+### 7. Login user
 
 Once we have created an `AuthenticationContext(config)`, the next step is check if user is cached. Keep in mind that the whole authentication process is done through `MicrosoftTeams.getContext({...auth process goes here...})` to ensure the auth process only runs within MS Teams.
 
@@ -151,7 +162,7 @@ microsoftTeams.getContext((context) => {
 
 As shown above, before we can authenticate the user, we check if the user is cached (already stored in memory). If user is not cached, we invoke the `authContext.login()` method which opens up a popup page that waits for user credentials. Remember to set the popup property to `true` in configs otherwise the popup page won't show. If user has already signed in in MS Teams, the popup page uses that context to automatically sign in the user. It means the popup page will only be visible within 1-2 seconds.
 
-### Handle cache
+### 8. Handle cache
 
 Once the user has logged in, to reduce number of authenticate requests to server we need to cache it. Working with cache in gneneral is always a challenge in terms of deciding when to change the old value with the new value. However, `Adal.js` provides an easy and convinient way to handle cache with methods like `authContext.getCachedUser()`, `authContext.getCachedToken()`, and 'authContext.clearCache()'.
 
@@ -171,7 +182,7 @@ microsoftTeams.getContext((context) => {
 
 As shown in the example above, if expected user is not the same as cached user, we clear the cache. Next time the user enters the content page, he must login again. This step is necessary to keep track of the current user, otherwise, we end up with a conflict between old and new data in the authentication process.
 
-## Get id token
+## 9. Get `id_token`
 If authentication is successful and user is cached, Azure AD returns an id token which means user is authenticated. So whenever we need to access MS Graph API, we check if the id token exists first to make sure the user is still logged-in, and the token hasn't expired.
 
 In order to get the id token, we wait for an event to be triggered by the user like:
@@ -209,9 +220,10 @@ As shown above,  we check if an `error` is returned which can be a message of ty
 Once the user is authenticated, the next step is to authorize the user. At first, these two words seems synonoms, but must not be mixed. Authentication means confirming the user's identity wheres authorization means being allowed to access the domain. In otherwords, to allow a the content page to interact with MS Graph API, for instance generate an excel file or get user details, the user must authorize it. This is done by showing a popup page with a list of permissions the user can consent or cancel.
 
 
-### Application or Delegate
+#### Application or Delegate
 
-There are two permission types (Application or Delegate) to get an access token. Application if a dameon service wants to sends emails on a weekly-basis (user authentication is not required), Delegate if actions comes from a user (user authentication is required). Admin can set permissions differently for Applicaiton or Delegate depending on domain requirements in Azure AD.
+There are two permission types (Application or Delegate), or ways to get an access token. If a dameon service wants to sends emails on a weekly-basis (user authentication is not required) this is known as Application request. If actions are based on user events (user authentication is required) this is known as Delegate requests. Admin can set permissions depending if the requests comes from a dameon or user in Azure AD.
+
 
 
 ```bash
@@ -223,8 +235,6 @@ https://login.microsoftonline.com/${context.tid}/oauth2/v2.0/token?{queryParams}
 ```
 
 As mentioned, to open the gateway to interact with MS Graph API we need an `access_token`. To get the access token, we must navigate to `authorizeEndpoint` with the query parameters defined in `queryParams` object. The authorization endpoint also needs a tenant id which can be found in MS graph context or the config object defind above.
-
-> According to the documentation and examples using Adal.js library, it seems that it is possible to get access token using the example shown above. That would be the easiest and most practical way of doing so by utilizing the library, however, I tried different approaches but could not get the access token and instead got id token. In order to access MS Graph API , an access token is required. After a couple of trials, I went with an approach which works, but I'm sure there are better ways of doing it. The best ways is of course to the the access token when running `aquireToken` method.
 
 ```ts
  let queryParams = {
@@ -295,7 +305,7 @@ export default Authorization;
 
 > Note: If the authorization process fails, you can show an error message here. But make sure you put the redirect code inside a conditional statement.
 
-## Acess Microsoft Graph
+## Acess MS Graph API
 
 With succefull user authentication and an access token, this leads us to the final step where we can use MS Graph API to access data in Azure AD, Office 365 services, Office 365, Enterprise Mobility, Security services, Windows 10 services, and more. For this example, we'll generate an excel file, and store it on user's OneDrive.
 
@@ -343,7 +353,21 @@ function generateExcelFile() {
 }
 ```
 
-## Summary
+###Side note
+According to the documentation and examples it seems that it's possible to get access token just by using the Adal.js SDK library. That would be the easiest and most practical way of doing so by utilizing the library. For my example, I did not manage to get the access token but instead got the id token. The issue here is the `aud` property (identifies the intented recipient) in id token is set to client id which is wrong, it must be `graph.microsoft.com`.
+
+If look at the access token retreived from the authorization request the `aud` property is `graph.microsoft.com` which is correct. This ways of getting first the id token and then the access token feels a bit hacky as shown in the Get access token section. However, I'm sure there are better ways of doing so.
+
+Here's an [example](https://gist.github.com/psignoret/50e88652ae5cb6cc157c09857e3ba87f) which uses the convenient approach (it did not work for me).
+
+```ts
+authContext.aquireToken('https://graph.microsoft.com', (errorDesc, token, error) => {})
+```
+
+I have tried many ways but could not get the access token and instead got id token. In order to access MS Graph API , an access token is required. After a couple of trials, I went with an approach which works, but I'm sure there are better ways of doing it. The best ways is of course to the the access token when running `aquireToken` method.
+
+
+# Summary
 
 We have now covered how to authenticate a user, authorize user to get the access token, use access token to access MS Graph API, and last but not least, generate an Excel file on user's OneDrive. In order to make the authentication and authorization flow work, remember to wrap the flow inside the MS Teams context otherwise the content page won't be displayed. If we put the code outside the MS Teams context, the code will still work, but not shown in MS Teams.
 
@@ -358,7 +382,12 @@ microsoftTeams.getContext(context => {
 
 Authentication in Microsoft, or any other languages is always a challenge thus there are many ways to do it and concerns to be aware of in terms of security. In either way, it's recommended to perform security tests and perhaps contact those that are have done it before. In general, authentication can never be 100 % secure, but we can try our best to make it as secure as possible following good guidelines provided by Microsoft.
 
-
+## Resources
+* [Register an application in Azure AD](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app)
+* [Create content page in MS Teams](https://medium.com/@paumadregis/custom-microsoft-teams-applications-the-easy-way-6da0a5975336)
+* [Authentication Flow for Tabs](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/auth-flow-tab)
+* [Silent Authentication](https://docs.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/auth-silent-aad)
+* [Microsoft Teams Sample Auth Node](https://github.com/OfficeDev/microsoft-teams-sample-auth-node)
 
 
 
