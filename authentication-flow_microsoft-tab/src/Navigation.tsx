@@ -21,7 +21,7 @@ const Navigation: = () => {
                 </section>
 
                 <Route path="/" exact component={Home}></Route>
-                <Route path="/tab/autherization" exact component={Authorization}></Route>
+                <Route path="/tab/authorization" exact component={Authorization}></Route>
             </div>
         </Router>
     );
