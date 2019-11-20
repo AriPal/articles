@@ -1,4 +1,4 @@
-# Learn how authentication and authorization flow works for content page in Microsoft Teams
+# Learn How Authentication and Authorization Flow Works for Content Page in Microsoft Teams
 
 ![Netcompany logo](https://miro.medium.com/max/137/1*CWxqiYnxrOzHP-t8wQWfjQ.png)
 
