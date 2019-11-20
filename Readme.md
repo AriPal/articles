@@ -1,5 +1,7 @@
 # Silent Authentication for Integrated Web Apps in Microsoft Teams using OAuth 2.0
 
+>All code examples used here can be found in Authentication-Flow-Microsoft-Tab folder in this repository. The project only works when deployed in Microsoft Teams.
+
 ![Netcompany logo](https://miro.medium.com/max/137/1*CWxqiYnxrOzHP-t8wQWfjQ.png)
 
 I work as a Software Consultant at Netcompany Norway - an international company with more than 2000 employees in 6 countries that provides valuable expertise and experience to help organizations with digital transformation. Currently, they are exploring new fields and ways to automate time-consuming processes using Microsoft cloud services in Microsoft Teams (MS Teams). One of them, which this article emphasizes, is to integrate a content page (web app) in MS Teams that can interact with Microsoft Graph API (MS Graph) for generating an Excel file on the user's OneDrive.
