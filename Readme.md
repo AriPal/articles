@@ -23,7 +23,7 @@ The end-goal of this article is to generate an Excel file and store it on OneDri
 
 > What is Azure Actice Directory (AAD), and why do we need it? In order to secure our data from a unauthorized users, we must ensure two things; they belong to the correct domain (company), and consent to provided access permisions like (User.Read, File.Read).
 
-This article won't cover how to integrate a web application with Microsoft Teams using App Studio. Here's a nice [article](https://medium.com/@paumadregis/custom-microsoft-teams-applications-the-easy-way-6da0a5975336) by Pär that covers it very well.
+This article won't cover how to integrate a web application with Microsoft Teams using App Studio. Here's a nice [article](https://medium.com/@paumadregis/custom-microsoft-teams-applications-the-easy-way-6da0a5975336) by Pär Joona that covers it very well.
 
 ## Prerequisites
 
@@ -90,7 +90,7 @@ This way the content page is displayed in MS Teams through the embedded view con
 
 ### Setup Configuration
 
-Before we setup the configuration object with details (found in overview page in Azure AD) to authenticate the user, we must add the `redirectURI` in the list of redirect URIs for the Azure AD app. Once the user is successfully authenticated, Azure AD validates if `redirectURI` exists, and if the `redirectURI` is not found in Azure AD, the process will fail by returning an error: `The reply url specified in the request does not mach the reply urls configured for the application`.
+The seup configuration is pretty much straightforward. But before we setup the configuration with information present in Azure AD to authenticate a user, we must add the `redirectURI` in the list of redirect URIs for the Azure AD app. Once the user is authentication is successfull, Azure AD will check if the `redirectURI` is defined in Azure AD, if it's defined it will add an access token and return it as a query string in which the developer can further use to access MS Graph API. If Azure AD doesn't find the `redirectURI`, it returns a popup page saying: `The reply url specified in the request does not mach the reply urls configured for the application`.
 
 But how does the authentication flow look when we try to login a user? Here's a basic example that illustrates the authentication flow:
 
@@ -131,7 +131,7 @@ let authContext = new AuthenticationContext(config);
 
 Now everytime you use `authContext`, it will perform operations based on what is defined in `config` object. This means if your application interacts with various of Azure AD domains, you can setup multiple contexts.
 
-### Check if user is logged in
+### Login user
 
 Once we have created an `AuthenticationContext(config)`, the next step is check if user is cached. Keep in mind that the whole authentication process is done through `MicrosoftTeams.getContext({...auth process goes here...})` to ensure the auth process only runs within MS Teams.
 
@@ -169,7 +169,40 @@ microsoftTeams.getContext((context) => {
 }
 ```
 
- If expected user is not the same as cached user, we clear the cache. This means the next time user enters the content page, he needs to login again.
+As shown in the example above, if expected user is not the same as cached user, we clear the cache. Next time the user enters the content page, he must login again. This step is necessary to keep track of the current user, otherwise, we end up with a conflict between old and new data in the authentication process.
+
+## Get id token
+If authentication is successful and user is cached, Azure AD returns an id token which means user is authenticated. So whenever we need to access MS Graph API, we check if the id token exists first to make sure the user is still logged-in, and the token hasn't expired.
+
+In order to get the id token, we wait for an event to be triggered by the user like:
+
+```jsx
+return (
+    <div>
+        <button onClick={ () => generateExcelFile() }>Generate Excel file</button>
+    </div>
+);
+```
+When the user clicks on the button to Generate an Excel file, the function `generateExcelFile()` is invoked. This function runs a method `authContext.aquireToken(resource: string, callback: TokenCallback)` to check if the id token exists or not by returning 3 arguments `errorDesc`, `token`, and `error`:
+
+```ts
+function generateExcelFile() {
+    microsoftTeams.getContext((context) => {
+        authContext.acquireToken(config.clientId, function (errorDesc, token, error) {
+            if (error) {
+                // Show sign-in button
+            }
+            else {
+                // Get cached access_token
+                // Create Excel File
+                // Access MS Graph API (to store Excel file on OneDrive)
+            }
+        });
+    })
+}
+```
+As shown above,  we check if an `error` is returned which can be a message of type `token renewal has failed` or `token does not exist`. If error is present, we can show a sign-in button where the user can try to login again. If error is not present, we can go ahead and get the access token, create en Excel file, and then store it on user's OneDrive using MS Graph API.
+
 
 ## Get access token
 
@@ -310,6 +343,20 @@ function generateExcelFile() {
 }
 ```
 
+## Summary
+
+We have now covered how to authenticate a user, authorize user to get the access token, use access token to access MS Graph API, and last but not least, generate an Excel file on user's OneDrive. In order to make the authentication and authorization flow work, remember to wrap the flow inside the MS Teams context otherwise the content page won't be displayed. If we put the code outside the MS Teams context, the code will still work, but not shown in MS Teams.
+
+Here's a high-level overview of what you need to make the content page (web app) work in MS Teams.
+
+```ts
+microsoftTeams.initialize();
+microsoftTeams.getContext(context => {
+    // This is where we perform the authentication and autherization flow
+});
+```
+
+Authentication in Microsoft, or any other languages is always a challenge thus there are many ways to do it and concerns to be aware of in terms of security. In either way, it's recommended to perform security tests and perhaps contact those that are have done it before. In general, authentication can never be 100 % secure, but we can try our best to make it as secure as possible following good guidelines provided by Microsoft.
 
 
 
