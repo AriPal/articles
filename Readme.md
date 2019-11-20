@@ -174,7 +174,7 @@ microsoftTeams.getContext((context) => {
 
 As shown in the example above, if the expected user is not the same as the user cached, we clear the cache. Next time the user enters the content page, he must log in again. This step is necessary to keep track of the current user, otherwise, we end up with a conflict between old and new data in the authentication process.
 
-## 8. Get `id_token`
+### 8. Get `id_token`
 If authentication is successful and the user is cached, Azure AD returns an id-token which means the user is authenticated. So whenever we need to access MS Graph API, we check if the id-token exists first to make sure the user is still logged-in, and the token hasn't expired.
 
 To get the id-token, we wait for an event to be triggered by the user like:
