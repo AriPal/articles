@@ -328,7 +328,6 @@ function generateExcelFile() {
                     XLSX.utils.book_append_sheet(book, sheet, 'sheet1');
                     let workBook = XLSX.write(book, { bookType: 'xlsx', type: 'array' }); // type must be array otherwise it will be corrupt in OneDrive
 
-                    console.log('workBook', workBook);
                     let init: RequestInit = {
                         method: 'PUT',
                         headers: headers,
