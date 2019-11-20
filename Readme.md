@@ -1,6 +1,6 @@
 # Silent Authentication for Integrated Web Apps in Microsoft Teams using OAuth 2.0
 
->All code examples used here can be found in Authentication-Flow-Microsoft-Tab folder in this repository. The project only works when deployed in Microsoft Teams.
+>All code examples used here can be found in Authentication-Flow_Microsoft-Tab folder in this repository. Note: The project only works when deployed in Microsoft Teams.
 
 ![Netcompany logo](https://miro.medium.com/max/137/1*CWxqiYnxrOzHP-t8wQWfjQ.png)
 
